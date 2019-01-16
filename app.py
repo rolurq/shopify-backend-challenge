@@ -1,17 +1,10 @@
-import graphene
-import uvicorn
-
 from starlette.applications import Starlette
 from starlette.graphql import GraphQLApp
 
+from graphql.execution.executors.asyncio import AsyncioExecutor
 
-class Query(graphene.ObjectType):
-    hello = graphene.String(name=graphene.String(default_value="stranger"))
-
-    def resolve_hello(self, info, name):
-        return "Hello " + name
+from models import schema
 
 
 app = Starlette()
-app.add_route('/', GraphQLApp(schema=graphene.Schema(query=Query)))
-
+app.add_route('/query', GraphQLApp(schema=schema, executor=AsyncioExecutor()))
