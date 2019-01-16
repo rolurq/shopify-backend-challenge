@@ -12,6 +12,7 @@ graphene = "*"
 tinydb = "*"
 aiotinydb = "*"
 gunicorn = "*"
+ujson = "*"
 
 [requires]
 python_version = "3.6"
