@@ -3,7 +3,7 @@ import graphene
 from .types import *
 from .inputs import *
 
-__all__ = ('Signup', 'Login', 'AddToCart', 'RemoveFromCart')
+__all__ = ("Signup", "Login", "AddToCart", "RemoveFromCart")
 
 
 class Signup(graphene.Mutation):
@@ -46,5 +46,5 @@ class RemoveFromCart(graphene.Mutation):
     Output = Cart
 
     @staticmethod
-    def mutate(root, info, productId, amount):
+    def mutate(root, info, productId: str, amount: int):
         pass

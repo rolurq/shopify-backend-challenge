@@ -13,16 +13,18 @@ class Query(graphene.ObjectType):
     def resolve_products(self, info):
         return []
 
-    def resolve_product(self, info, id):
+    def resolve_product(self, info, id: str):
         return None
 
     def resolve_user(self, info):
         return None
+
 
 class Mutation(graphene.ObjectType):
     signup = Signup.Field()
     login = Login.Field()
     addToCart = AddToCart.Field()
     removeFromCart = RemoveFromCart.Field()
+
 
 schema = graphene.Schema(query=Query, mutation=Mutation)
