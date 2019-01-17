@@ -1,6 +1,6 @@
 import graphene
 from tinydb.database import Document
-from utils.password import hash_password, verify_password
+from ..utils.password import hash_password, verify_password
 
 __all__ = ("Product", "CartProduct", "Cart", "User")
 
@@ -10,6 +10,13 @@ class Product(graphene.ObjectType):
     title = graphene.String(required=True)
     price = graphene.Float(required=True)
     inventory_count = graphene.Int(required=True)
+
+    def to_doc(self) -> dict:
+        return {
+            "title": self.title,
+            "price": self.price,
+            "inventory_count": self.inventory_count,
+        }
 
     @staticmethod
     def from_doc(doc: Document) -> "Product":

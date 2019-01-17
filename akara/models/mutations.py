@@ -3,15 +3,21 @@ import jwt
 from graphql import GraphQLError
 
 from config.settings import SECRET_KEY
-from utils.database import Q
+from ..utils.database import Q
 
-from .types import *
 from .inputs import *
+from .types import *
 
 __all__ = ("Signup", "Login", "AddToCart", "RemoveFromCart")
 
 
 class Signup(graphene.Mutation):
+    """
+    Graphql mutation for user registration
+
+    Takes an UserInput with data to create the new user a
+    """
+
     class Arguments:
         input = UserInput(required=True)
 
@@ -58,6 +64,7 @@ class Login(graphene.Mutation):
 
         return Login(token=jwt.encode(user.to_json(), key=SECRET_KEY).decode())
 
+
 class AddToCart(graphene.Mutation):
     class Arguments:
         productId = graphene.ID(required=True)
@@ -66,8 +73,9 @@ class AddToCart(graphene.Mutation):
     Output = graphene.NonNull(Cart)
 
     @staticmethod
-    def mutate(root, info, productId, amount):
+    def mutate(root, info, productId: str, amount: int):
         pass
+
 
 class RemoveFromCart(graphene.Mutation):
     class Arguments:

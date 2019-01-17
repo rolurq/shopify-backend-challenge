@@ -34,6 +34,22 @@ AIOTinyDB.storage_proxy_class = UuidStorageProxy
 
 
 class TinyDbMiddleware:
+    """
+    Starlette middleware to provide TinyDb database
+
+    Uses [aiotinydb](https://github.com/ASMfreaK/aiotinydb) to provide the
+    database connection. The `database_url` that must be supplied must match
+    the pattern `tinydb://path/to/database` in order to be loaded corretcly
+
+    Example
+    -------
+    ```
+    async with request.database as db:
+        # db is a TinyDb instance
+        db.insert({ ... })
+    ```
+    """
+
     def __init__(self, app: ASGIApp, database_url: DatabaseURL) -> None:
         self.app = app
         self.database = AIOTinyDB(database_url.hostname + database_url.path)

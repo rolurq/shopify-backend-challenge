@@ -2,7 +2,7 @@ import graphene
 
 from .types import *
 from .mutations import *
-from utils.database import Q
+from ..utils.database import Q
 
 
 class Query(graphene.ObjectType):

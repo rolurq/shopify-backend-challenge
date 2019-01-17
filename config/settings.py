@@ -1,7 +1,7 @@
 from starlette.config import Config
 from starlette.datastructures import DatabaseURL
 
-from utils.database import TinyDbMiddleware as DatabaseMiddleware
+from akara.utils.database import TinyDbMiddleware as DatabaseMiddleware
 
 
 config = Config(".env")

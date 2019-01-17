@@ -3,7 +3,7 @@ from starlette.graphql import GraphQLApp
 
 from graphql.execution.executors.asyncio import AsyncioExecutor
 
-from models import schema
+from .models import schema
 from config.settings import DEBUG, DATABASE_URL, DatabaseMiddleware
 
 
