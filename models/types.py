@@ -11,9 +11,20 @@ class Product(graphene.ObjectType):
     price = graphene.Float(required=True)
     inventory_count = graphene.Int(required=True)
 
+    @staticmethod
+    def from_doc(doc: Document) -> "Product":
+        return Product(
+            id=doc.doc_id,
+            title=doc.get("title"),
+            price=doc.get("price"),
+            inventory_count=doc.get("inventory_count"),
+        )
+
+
 class CartProduct(graphene.ObjectType):
     product = graphene.Field(Product, required=True)
     amount = graphene.Int(required=True, default_value=1)
+
 
 class Cart(graphene.ObjectType):
     products = graphene.List(graphene.NonNull(CartProduct), required=True)

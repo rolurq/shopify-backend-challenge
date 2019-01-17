@@ -2,6 +2,7 @@ import graphene
 
 from .types import *
 from .mutations import *
+from utils.database import Q
 
 
 class Query(graphene.ObjectType):
@@ -10,11 +11,25 @@ class Query(graphene.ObjectType):
     cart = graphene.Field(Cart)
     user = graphene.Field(User)
 
-    def resolve_products(self, info):
-        return []
+    async def resolve_products(self, info):
+        request = info.context.get("request")
+        async with request.database as db:
+            products = db.table("products")
 
-    def resolve_product(self, info, id: str):
-        return None
+            return [
+                Product.from_doc(doc) for doc in products.search(Q.inventory_count > 0)
+            ]
+
+    async def resolve_product(self, info, id: str):
+        request = info.context.get("request")
+        async with request.database as db:
+            products = db.table("products")
+
+            product = products.get(doc_id=id)
+            if not product:
+                return None
+
+        return Product.from_doc(product)
 
     def resolve_user(self, info):
         return None
