@@ -27,7 +27,7 @@ def test_exclude_emptied_products(client: StarletteGraphQlClient):
 def test_obtain_by_id(client: StarletteGraphQlClient):
     response = client.execute(
         """
-        query ($id: ID!){
+        query($id: ID!) {
             product(id: $id) { id }
         }
         """,
@@ -39,7 +39,7 @@ def test_obtain_by_id(client: StarletteGraphQlClient):
 def test_obtain_by_id_not_existent(client: StarletteGraphQlClient):
     response = client.execute(
         """
-        query ($id: ID!) {
+        query($id: ID!) {
             product(id: $id) { id }
         }
         """,
