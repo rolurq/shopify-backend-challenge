@@ -1,5 +1,7 @@
 import graphene
 from tinydb.database import Document
+from starlette.authentication import BaseUser
+
 from ..utils.password import hash_password, verify_password
 
 __all__ = ("Product", "CartProduct", "Cart", "User")
@@ -38,9 +40,17 @@ class Cart(graphene.ObjectType):
     price = graphene.Float(required=True)
 
 
-class User(graphene.ObjectType):
+class User(graphene.ObjectType, BaseUser):
     id = graphene.ID(required=True)
     username = graphene.String(required=True)
+
+    @property
+    def is_authenticated(self) -> bool:
+        return True
+
+    @property
+    def display_name(self) -> str:
+        return self.username
 
     def set_password(self, password: str) -> None:
         self.password_hash = hash_password(password)
@@ -48,14 +58,19 @@ class User(graphene.ObjectType):
     def check_password(self, password: str) -> bool:
         return verify_password(password, self.password_hash)
 
-    def to_doc(self) -> dict:
-        return {"username": self.username, "password_hash": self.password_hash}
-
-    def to_json(self) -> dict:
-        return {"username": self.username, "id": self.id}
-
     @staticmethod
     def from_doc(doc: Document) -> "User":
         user = User(id=doc.doc_id, username=doc.get("username"))
         user.password_hash = doc.get("password_hash")
         return user
+
+    def to_doc(self) -> dict:
+        return {"username": self.username, "password_hash": self.password_hash}
+
+    @staticmethod
+    def from_json(data: dict) -> "User":
+        return User(**data)
+
+    def to_json(self) -> dict:
+        return {"username": self.username, "id": self.id}
+
