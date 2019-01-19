@@ -2,7 +2,7 @@ import graphene
 import jwt
 from graphql import GraphQLError
 
-from config.settings import SECRET_KEY
+from config.settings import SECRET_KEY, JWT_ALGORITHM
 from ..utils.database import Q
 
 from .inputs import *
@@ -37,7 +37,11 @@ class Signup(graphene.Mutation):
             user.set_password(input.password)
             user.id = users.insert(user.to_doc())
 
-        return Signup(token=jwt.encode(user.to_json(), key=SECRET_KEY).decode())
+        return Signup(
+            token=jwt.encode(
+                user.to_json(), key=SECRET_KEY, algorithm=JWT_ALGORITHM
+            ).decode()
+        )
 
 
 class Login(graphene.Mutation):
@@ -62,7 +66,11 @@ class Login(graphene.Mutation):
             if not user.check_password(password):
                 raise GraphQLError("incorrect password")
 
-        return Login(token=jwt.encode(user.to_json(), key=SECRET_KEY).decode())
+        return Login(
+            token=jwt.encode(
+                user.to_json(), key=SECRET_KEY, algorithm=JWT_ALGORITHM
+            ).decode()
+        )
 
 
 class AddToCart(graphene.Mutation):

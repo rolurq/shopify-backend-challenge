@@ -2,42 +2,34 @@ import jwt
 from starlette.authentication import (
     AuthenticationBackend,
     AuthenticationError,
-    BaseUser,
     AuthCredentials,
     UnauthenticatedUser,
 )
 
-
-class JWTUser(BaseUser):
-    def __init__(self, username: str, token: str, payload: dict) -> None:
-        self.username = username
-        self.token = token
-        self.payload = payload
-
-    @property
-    def is_authenticated(self) -> bool:
-        return True
-
-    @property
-    def display_name(self) -> str:
-        return self.username
+from ..models import User
 
 
 class JWTAuthenticationBackend(AuthenticationBackend):
-    def __init__(
-        self, secret_key: str, prefix: str = "JWT", username_field: str = "username"
-    ):
+    """
+    Authentication backend that uses JWT as authentication tokens
+    """
+
+    def __init__(self, secret_key: str, algorithm: str, prefix: str = "Bearer"):
         self.secret_key = secret_key
+        self.algorithm = algorithm
         self.prefix = prefix
-        self.username_field = username_field
 
     @classmethod
-    def get_token_from_header(cls, authorization: str, prefix: str):
+    def get_token_from_header(cls, authorization: str, prefix: str) -> str:
         """
         Parses the Authorization header and returns only the token
 
-        :param authorization:
-        :return:
+        :param authorization str: Value of the authorization header
+        :param prefix str: Token prefix in the header
+        :return: The token value
+        :rtype str:
+        :raises AuthenticationError: If prefix in header doesn't match `prefix` or
+        if header value doesn't follow the `<prefix> <token>` pattern
         """
         try:
             scheme, token = authorization.split()
@@ -56,13 +48,10 @@ class JWTAuthenticationBackend(AuthenticationBackend):
         auth = request.headers["Authorization"]
         token = self.get_token_from_header(authorization=auth, prefix=self.prefix)
         try:
-            payload = jwt.decode(token, key=self.secret_key)
+            payload = jwt.decode(
+                token, key=self.secret_key, algorithms=(self.algorithm,)
+            )
         except jwt.InvalidTokenError as e:
             raise AuthenticationError(str(e))
 
-        return (
-            AuthCredentials(["authenticated"]),
-            JWTUser(
-                username=payload[self.username_field], token=token, payload=payload
-            ),
-        )
+        return (AuthCredentials(["authenticated"]), User.from_json(payload))

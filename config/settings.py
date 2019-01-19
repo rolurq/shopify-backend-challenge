@@ -9,6 +9,7 @@ config = Config(".env")
 DEBUG = config("DEBUG", cast=bool, default=False)
 TESTING = config("TESTING", cast=bool, default=False)
 SECRET_KEY = config("SECRET_KEY", default="unsecure secret")
+JWT_ALGORITHM = config("JWT_ALGORITHM", default="HS256")
 
 DATABASE_URL = config("DATABASE_URL", cast=DatabaseURL)
 if TESTING:
