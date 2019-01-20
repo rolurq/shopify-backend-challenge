@@ -34,11 +34,9 @@ class JWTAuthenticationBackend(AuthenticationBackend):
         try:
             scheme, token = authorization.split()
         except ValueError:
-            raise AuthenticationError(
-                "Could not separate Authorization scheme and token"
-            )
+            raise AuthenticationError("incorrect authorization header format")
         if scheme.lower() != prefix.lower():
-            raise AuthenticationError(f"Authorization scheme {scheme} is not supported")
+            raise AuthenticationError(f"authorization scheme {scheme} is not supported")
         return token
 
     async def authenticate(self, request):
@@ -51,7 +49,9 @@ class JWTAuthenticationBackend(AuthenticationBackend):
             payload = jwt.decode(
                 token, key=self.secret_key, algorithms=(self.algorithm,)
             )
-        except jwt.InvalidTokenError as e:
+        except jwt.PyJWTError as e:
             raise AuthenticationError(str(e))
 
+        # removes 'exp' key to create user object only with relevant data
+        del payload["exp"]
         return (AuthCredentials(["authenticated"]), User.from_json(payload))

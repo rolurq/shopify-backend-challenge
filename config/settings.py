@@ -10,6 +10,7 @@ DEBUG = config("DEBUG", cast=bool, default=False)
 TESTING = config("TESTING", cast=bool, default=False)
 SECRET_KEY = config("SECRET_KEY", default="unsecure secret")
 JWT_ALGORITHM = config("JWT_ALGORITHM", default="HS256")
+JWT_EXPIRATION_DAYS = config("JWT_EXPIRATION_DAYS", cast=int, default=60)
 
 DATABASE_URL = config("DATABASE_URL", cast=DatabaseURL)
 if TESTING:

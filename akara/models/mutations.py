@@ -1,12 +1,14 @@
+from datetime import datetime, timedelta
+
 import graphene
 import jwt
 from graphql import GraphQLError
 
-from config.settings import SECRET_KEY, JWT_ALGORITHM
-from ..utils.database import Q
+from config.settings import SECRET_KEY, JWT_ALGORITHM, JWT_EXPIRATION_DAYS
 
 from .inputs import *
 from .types import *
+from ..utils.database import Q
 
 __all__ = ("Signup", "Login", "AddToCart", "RemoveFromCart")
 
@@ -39,7 +41,12 @@ class Signup(graphene.Mutation):
 
         return Signup(
             token=jwt.encode(
-                user.to_json(), key=SECRET_KEY, algorithm=JWT_ALGORITHM
+                {
+                    **user.to_json(),
+                    "exp": datetime.utcnow() + timedelta(days=JWT_EXPIRATION_DAYS),
+                },
+                key=SECRET_KEY,
+                algorithm=JWT_ALGORITHM,
             ).decode()
         )
 
@@ -68,7 +75,12 @@ class Login(graphene.Mutation):
 
         return Login(
             token=jwt.encode(
-                user.to_json(), key=SECRET_KEY, algorithm=JWT_ALGORITHM
+                {
+                    **user.to_json(),
+                    "exp": datetime.utcnow() + timedelta(days=JWT_EXPIRATION_DAYS),
+                },
+                key=SECRET_KEY,
+                algorithm=JWT_ALGORITHM,
             ).decode()
         )
 
