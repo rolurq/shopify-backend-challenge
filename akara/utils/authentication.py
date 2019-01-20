@@ -1,12 +1,60 @@
+import asyncio
+import functools
+import typing
+
 import jwt
+from graphql import GraphQLError
 from starlette.authentication import (
     AuthenticationBackend,
     AuthenticationError,
     AuthCredentials,
     UnauthenticatedUser,
+    has_required_scope,
 )
 
 from ..models import User
+
+
+def requires(
+    scopes: typing.Union[str, typing.Sequence[str]],
+    message: str = "you must be logged in",
+) -> typing.Callable:
+    """
+    Decorator to ensure scope existence for a resolver method. Works similar
+    to the one provided in the authentication module of starlette but works
+    with graphql (request is not a paremeter, it's inside a context value)
+
+    :param scopes: scope name or list of scope names to check
+    :param message: optional error message to show when the scopes are not present
+    """
+    scopes = [scopes] if isinstance(scopes, str) else list(scopes)
+
+    def decorator(func: typing.Callable) -> typing.Callable:
+        if asyncio.iscoroutinefunction(func):
+
+            @functools.wraps(func)
+            async def wrapper(*args: typing.Any, **kwargs: typing.Any) -> typing.Any:
+                info = kwargs.get("info", args[1])
+                request = info.context.get("request")
+
+                if not has_required_scope(request, scopes):
+                    raise GraphQLError(message)
+                return await func(*args, **kwargs)
+
+            return wrapper
+
+        @functools.wraps(func)
+        def wrapper(*args: typing.Any, **kwargs: typing.Any) -> typing.Any:
+            info = kwargs.get("info", args[1])
+            request = info.context.get("request")
+
+            if not has_required_scope(request, scopes):
+                raise GraphQLError(message)
+            return func(*args, **kwargs)
+
+        return wrapper
+
+    return decorator
 
 
 class JWTAuthenticationBackend(AuthenticationBackend):

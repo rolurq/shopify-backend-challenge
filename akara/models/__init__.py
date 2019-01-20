@@ -32,13 +32,12 @@ class Query(graphene.ObjectType):
 
         return Product.from_doc(product)
 
-    async def resolve_user(self, info):
         request = info.context.get("request")
         user = request.user
-        if user.is_authenticated:
-            return user
-        else:
-            raise GraphQLError("you must be loged in to access your user data")
+    @requires("authenticated", message="you must be loged in to access your user data")
+    async def resolve_user(self, info):
+        request = info.context.get("request")
+        return request.user
 
 
 class Mutation(graphene.ObjectType):
