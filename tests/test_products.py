@@ -17,7 +17,16 @@ def initial_products(test_database):
 
 
 def test_exclude_emptied_products(client: StarletteGraphQlClient, initial_products):
-    response = client.execute("{ products { inventoryCount } }")
+    response = client.execute(
+        """
+        query($available: Boolean!) {
+            products(available: $available) {
+                inventoryCount
+            }
+        }
+        """,
+        variables={"available": True},
+    )
     assert response == {
         "data": {"products": [{"inventoryCount": 5}, {"inventoryCount": 10}]},
         "errors": None,
