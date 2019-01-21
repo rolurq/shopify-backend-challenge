@@ -42,7 +42,9 @@ class StarletteGraphQlClient:
         body = {"query": query}
         if variables:
             body["variables"] = variables
-        response = self.client.request("POST", "/query", json=body)
+        response = self.client.request("POST", "/query", json=body, **kwargs)
+        if response.headers.get("content-type") != "application/json":
+            return response.text
         return response.json()
 
 
