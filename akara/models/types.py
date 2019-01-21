@@ -7,7 +7,7 @@ from starlette.authentication import BaseUser
 
 from ..utils.password import hash_password, verify_password
 
-__all__ = ("Product", "CartProduct", "Cart", "User")
+__all__ = ("Product", "CartItem", "Cart", "User")
 
 
 class TinyDbSerializale:
@@ -41,7 +41,7 @@ class Product(graphene.ObjectType, TinyDbSerializale):
         )
 
 
-class CartProduct(graphene.ObjectType):
+class CartItem(graphene.ObjectType, TinyDbSerializale):
     product = graphene.Field(Product, required=True)
     amount = graphene.Int(required=True, default_value=1)
 
