@@ -29,6 +29,10 @@ class Signup(graphene.Mutation):
 
     @staticmethod
     async def mutate(root, info, input: UserInput) -> "Signup":
+        # disallow empty string as username or password
+        if not (input.username and input.password):
+            raise GraphQLError("username and password cannot be empty strings")
+
         user = User(username=input.username)
 
         request = info.context["request"]
