@@ -7,19 +7,23 @@ from ..utils.database import Q
 
 
 class Query(graphene.ObjectType):
-    products = graphene.List(graphene.NonNull(Product), required=True)
+    products = graphene.List(
+        graphene.NonNull(Product),
+        required=True,
+        available=graphene.Boolean(default_value=False),
+    )
     product = graphene.Field(Product, id=graphene.ID(required=True))
     cart = graphene.Field(Cart)
     user = graphene.Field(User)
 
-    async def resolve_products(self, info):
+    async def resolve_products(_, info, available: bool):
         request = info.context.get("request")
         async with request.database as db:
-            products = db.table("products")
+            products = db.table("products").search(
+                Q.inventory_count > 0 if available else Q
+            )
 
-            return [
-                Product.from_doc(doc) for doc in products.search(Q.inventory_count > 0)
-            ]
+        return [await Product.from_doc(doc) for doc in products]
 
     async def resolve_product(self, info, id: str):
         request = info.context.get("request")
