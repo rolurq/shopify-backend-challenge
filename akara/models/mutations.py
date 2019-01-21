@@ -145,6 +145,15 @@ class AddToCart(graphene.Mutation):
 
 
 class RemoveFromCart(graphene.Mutation):
+    """
+    Mutation to remove an item, or an amount of that item, from the shopping cart
+
+    :param productId str: id of the product to remove or reduce
+    :param amount int: amount of the product to reduce, if not present, removes product
+    completely
+    :return: the current state of the cart
+    """
+
     class Arguments:
         productId = graphene.ID(required=True)
         amount = graphene.Int()
@@ -152,5 +161,40 @@ class RemoveFromCart(graphene.Mutation):
     Output = Cart
 
     @staticmethod
-    def mutate(root, info, productId: str, amount: int):
-        pass
+    @requires("authenticated", message="you must be logged in to access the cart")
+    async def mutate(root, info, productId: str, amount: int = None):
+        request = info.context["request"]
+        user = request.user
+
+        async with request.database as db:
+            products = db.table("products")
+            cart_items = db.table("cart_items")
+
+            product = products.get(doc_id=productId)
+            if not product:
+                raise GraphQLError("product does not exists")
+
+            product = await Product.from_doc(product)
+
+            item = cart_items.get((Q.user == user.id) & (Q.product == productId))
+
+            if not item:
+                raise GraphQLError("cannot remove item from empty cart")
+
+            current_order = item.get("amount")
+            if not amount or current_order == amount:
+                cart_items.remove(doc_ids=[item.doc_id])
+            else:
+                if current_order < amount:
+                    raise GraphQLError("cannot remove more items than where added")
+
+                item["amount"] -= amount
+                cart_items.write_back([item])
+
+            # the cart is the list of cart items associated to a user
+            # there's not explicit model for the cart in the storage
+            cart = cart_items.search(Q.user == user.id)
+
+        if not cart:
+            return None
+        return await Cart.from_doc(cart, request.database)
