@@ -2,7 +2,7 @@ import pytest
 from .conftest import StarletteGraphQlClient
 
 
-@pytest.fixture(autouse=True)
+@pytest.fixture
 def initial_products(test_database):
     products = test_database("products")
     products.insert_multiple(
@@ -16,7 +16,7 @@ def initial_products(test_database):
     products.purge()
 
 
-def test_exclude_emptied_products(client: StarletteGraphQlClient):
+def test_exclude_emptied_products(client: StarletteGraphQlClient, initial_products):
     response = client.execute("{ products { inventoryCount } }")
     assert response == {
         "data": {"products": [{"inventoryCount": 5}, {"inventoryCount": 10}]},
@@ -24,16 +24,24 @@ def test_exclude_emptied_products(client: StarletteGraphQlClient):
     }
 
 
-def test_obtain_by_id(client: StarletteGraphQlClient):
+def test_obtain_by_id(client: StarletteGraphQlClient, test_database):
+    products = test_database("products")
+    id = products.insert({"title": "Test Product", "price": 15, "inventory_count": 3})
     response = client.execute(
         """
         query($id: ID!) {
-            product(id: $id) { id }
+            product(id: $id) {
+                id
+                title
+            }
         }
         """,
-        variables={"id": "1"},
+        variables={"id": id},
     )
-    assert response == {"data": {"product": {"id": "1"}}, "errors": None}
+    assert response == {
+        "data": {"product": {"id": id, "title": "Test Product"}},
+        "errors": None,
+    }
 
 
 def test_obtain_by_id_not_existent(client: StarletteGraphQlClient):
