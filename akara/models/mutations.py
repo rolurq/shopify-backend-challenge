@@ -18,7 +18,8 @@ class Signup(graphene.Mutation):
     """
     Graphql mutation for user registration
 
-    Takes an UserInput with data to create the new user a
+    :param input UserInput: an object with the neccessary data to create a new user
+    :returns: the JWT that the user must use in upcoming requests
     """
 
     class Arguments:
@@ -53,6 +54,14 @@ class Signup(graphene.Mutation):
 
 
 class Login(graphene.Mutation):
+    """
+    Mutation for user login
+
+    :param username str:
+    :param password str:
+    :returns: the JWT that the user must use in upcoming requests
+    """
+
     class Arguments:
         username = graphene.String(required=True)
         password = graphene.String(required=True)

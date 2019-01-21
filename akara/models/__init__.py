@@ -18,6 +18,12 @@ class Query(graphene.ObjectType):
     user = graphene.Field(User)
 
     async def resolve_products(_, info, available: bool):
+        """
+        Obtain the list of all products
+
+        :param available bool: flag indicating if unavailable products should be
+        excluded from results
+        """
         request = info.context.get("request")
         async with request.database as db:
             products = db.table("products").search(
@@ -27,6 +33,11 @@ class Query(graphene.ObjectType):
         return [await Product.from_doc(doc) for doc in products]
 
     async def resolve_product(self, info, id: str):
+        """
+        Obtain a single product info using its id
+
+        :param id str: id of the product to query
+        """
         request = info.context.get("request")
         async with request.database as db:
             products = db.table("products")
@@ -35,7 +46,7 @@ class Query(graphene.ObjectType):
             if not product:
                 return None
 
-        return Product.from_doc(product)
+        return await Product.from_doc(product)
 
     @requires("authenticated", message="you must be logged in to access the cart")
     async def resolve_cart(self, info):
@@ -55,6 +66,9 @@ class Query(graphene.ObjectType):
 
     @requires("authenticated", message="you must be loged in to access your user data")
     async def resolve_user(self, info):
+        """
+        Obtain the current logged in user data
+        """
         request = info.context.get("request")
         return request.user
 
