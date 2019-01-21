@@ -78,6 +78,7 @@ class Mutation(graphene.ObjectType):
     login = Login.Field()
     addToCart = AddToCart.Field()
     removeFromCart = RemoveFromCart.Field()
+    completeCart = CompleteCart.Field()
 
 
 schema = graphene.Schema(query=Query, mutation=Mutation)
