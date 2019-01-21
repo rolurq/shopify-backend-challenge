@@ -4,6 +4,7 @@ from graphql import GraphQLError
 from .types import *
 from .mutations import *
 from ..utils.database import Q
+from ..utils.authentication import requires
 
 
 class Query(graphene.ObjectType):
@@ -36,8 +37,22 @@ class Query(graphene.ObjectType):
 
         return Product.from_doc(product)
 
+    @requires("authenticated", message="you must be logged in to access the cart")
+    async def resolve_cart(self, info):
+        """
+        Obtain the current status of the shopping cart
+        """
         request = info.context.get("request")
         user = request.user
+        async with request.database as db:
+            cart_items = db.table("cart_items")
+
+            cart = cart_items.search(Q.user == user.id)
+            if not cart:
+                return None
+
+        return await Cart.from_doc(cart, request.database)
+
     @requires("authenticated", message="you must be loged in to access your user data")
     async def resolve_user(self, info):
         request = info.context.get("request")
