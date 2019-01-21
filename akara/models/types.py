@@ -56,6 +56,22 @@ class CartItem(graphene.ObjectType, TinyDbSerializale):
 
 
 class Cart(graphene.ObjectType, TinyDbSerializale):
+    products = graphene.List(graphene.NonNull(CartItem), required=True)
+    price = graphene.Float(required=True)
+
+    @staticmethod
+    async def from_doc(docs: typing.List[Document], database: AIOTinyDB) -> "Cart":
+        price = 0
+        products = []
+        for doc in docs:
+            async with database as db:
+                product = db.table("products").get(doc_id=doc.get("product"))
+            amount = doc.get("amount")
+            price += product.get("price") * amount
+            products.append(CartItem(product=Product.from_doc(product), amount=amount))
+        return Cart(products=products, price=price)
+
+
 class User(graphene.ObjectType, BaseUser, TinyDbSerializale):
     id = graphene.ID(required=True)
     username = graphene.String(required=True)
