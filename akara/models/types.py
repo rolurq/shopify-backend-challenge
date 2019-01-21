@@ -48,7 +48,7 @@ class CartItem(graphene.ObjectType, TinyDbSerializale):
     @staticmethod
     async def from_doc(doc: Document) -> "CartItem":
         return CartItem(
-            product=Product.from_doc(doc.get("product")), amount=doc.get("amount")
+            product=await Product.from_doc(doc.get("product")), amount=doc.get("amount")
         )
 
     async def to_doc(self) -> dict:
@@ -68,7 +68,9 @@ class Cart(graphene.ObjectType, TinyDbSerializale):
                 product = db.table("products").get(doc_id=doc.get("product"))
             amount = doc.get("amount")
             price += product.get("price") * amount
-            products.append(CartItem(product=Product.from_doc(product), amount=amount))
+            products.append(
+                CartItem(product=await Product.from_doc(product), amount=amount)
+            )
         return Cart(products=products, price=price)
 
 
