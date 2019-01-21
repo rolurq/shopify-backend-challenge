@@ -1,5 +1,8 @@
+import typing
+
 import graphene
 from tinydb.database import Document
+from aiotinydb import AIOTinyDB
 from starlette.authentication import BaseUser
 
 from ..utils.password import hash_password, verify_password
@@ -7,13 +10,21 @@ from ..utils.password import hash_password, verify_password
 __all__ = ("Product", "CartProduct", "Cart", "User")
 
 
-class Product(graphene.ObjectType):
+class TinyDbSerializale:
+    async def from_doc(self, doc: Document, database: AIOTinyDB = None) -> typing.Any:
+        raise NotImplementedError()
+
+    async def to_doc(self) -> Document:
+        raise NotImplementedError()
+
+
+class Product(graphene.ObjectType, TinyDbSerializale):
     id = graphene.ID(required=True)
     title = graphene.String(required=True)
     price = graphene.Float(required=True)
     inventory_count = graphene.Int(required=True)
 
-    def to_doc(self) -> dict:
+    async def to_doc(self) -> dict:
         return {
             "title": self.title,
             "price": self.price,
@@ -21,7 +32,7 @@ class Product(graphene.ObjectType):
         }
 
     @staticmethod
-    def from_doc(doc: Document) -> "Product":
+    async def from_doc(doc: Document) -> "Product":
         return Product(
             id=doc.doc_id,
             title=doc.get("title"),
@@ -34,13 +45,18 @@ class CartProduct(graphene.ObjectType):
     product = graphene.Field(Product, required=True)
     amount = graphene.Int(required=True, default_value=1)
 
+    @staticmethod
+    async def from_doc(doc: Document) -> "CartItem":
+        return CartItem(
+            product=Product.from_doc(doc.get("product")), amount=doc.get("amount")
+        )
 
-class Cart(graphene.ObjectType):
-    products = graphene.List(graphene.NonNull(CartProduct), required=True)
-    price = graphene.Float(required=True)
+    async def to_doc(self) -> dict:
+        return {"product": self.product.id, "amount": self.amount, "user": self.user_id}
 
 
-class User(graphene.ObjectType, BaseUser):
+class Cart(graphene.ObjectType, TinyDbSerializale):
+class User(graphene.ObjectType, BaseUser, TinyDbSerializale):
     id = graphene.ID(required=True)
     username = graphene.String(required=True)
 
@@ -59,12 +75,12 @@ class User(graphene.ObjectType, BaseUser):
         return verify_password(password, self.password_hash)
 
     @staticmethod
-    def from_doc(doc: Document) -> "User":
+    async def from_doc(doc: Document) -> "User":
         user = User(id=doc.doc_id, username=doc.get("username"))
         user.password_hash = doc.get("password_hash")
         return user
 
-    def to_doc(self) -> dict:
+    async def to_doc(self) -> dict:
         return {"username": self.username, "password_hash": self.password_hash}
 
     @staticmethod
