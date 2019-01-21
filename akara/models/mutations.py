@@ -11,7 +11,7 @@ from .types import *
 from ..utils.database import Q
 from ..utils.authentication import requires
 
-__all__ = ("Signup", "Login", "AddToCart", "RemoveFromCart")
+__all__ = ("Signup", "Login", "AddToCart", "RemoveFromCart", "CompleteCart")
 
 
 class Signup(graphene.Mutation):
@@ -198,3 +198,51 @@ class RemoveFromCart(graphene.Mutation):
         if not cart:
             return None
         return await Cart.from_doc(cart, request.database)
+
+
+class CompleteCart(graphene.Mutation):
+    """
+    Mutation to submit the current cart
+
+    :return: the charged amount and a flag indicating success or not
+    """
+
+    charged = graphene.Float(required=True)
+    # to control if charge was applied correctly, right now will always be True
+    success = graphene.Boolean(required=True)
+
+    @staticmethod
+    @requires("authenticated", message="you must be logged in to buy")
+    async def mutate(root, info):
+        request = info.context["request"]
+        user = request.user
+
+        async with request.database as db:
+            products = db.table("products")
+            cart_items = db.table("cart_items")
+
+            cart = cart_items.search(Q.user == user.id)
+            if not cart:
+                raise GraphQLError("cart is empty")
+
+            # store total charged value
+            charged = 0
+            # store modified products and their ids in order to execute a batch update later
+            bought_products_ids = []
+            bought_products = []
+            for item in cart:
+                product = products.get(doc_id=item.get("product"))
+
+                amount = item.get("amount")
+                product["inventory_count"] -= amount
+                charged += product.get("price") * amount
+
+                bought_products_ids.append(product.doc_id)
+                bought_products.append(product)
+
+            # make batch update of bought products
+            products.write_back(bought_products, doc_ids=bought_products_ids)
+            # clear the cart
+            cart_items.remove(doc_ids=[item.doc_id for item in cart])
+
+        return CompleteCart(success=True, charged=charged)
