@@ -2,7 +2,7 @@
 
 > You all remember akara ... right?
 
-Shop backend API with Python 3.6+ and Starlette using Graphql.
+Shop backend API with Python 3.6+ and Starlette using Graphql. This project is published in github and can be seen [here](https://github.com/rolurq/shopify-backend-challenge).
 
 ## Setup
 
