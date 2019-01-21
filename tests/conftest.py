@@ -6,8 +6,11 @@ from starlette.testclient import TestClient
 
 environ["TESTING"] = "True"
 
-from akara.models import schema
 from akara.app import app, DATABASE_URL
+from akara.utils.database import UuidStorageProxy, UuidTable
+
+TinyDB.table_class = UuidTable
+TinyDB.storage_proxy_class = UuidStorageProxy
 
 
 @pytest.fixture
